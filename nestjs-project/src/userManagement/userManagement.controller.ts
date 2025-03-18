@@ -1,39 +1,44 @@
-import { Controller, Get, Param, Post, Put, Delete, Body, UseGuards } from '@nestjs/common';
+// src/userManagement/user.controller.ts
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '../auth/role.enum';
+import { Role } from '../auth/roles.enum';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @Roles(Role.Admin)
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
+
   @Roles(Role.Admin)
   @Get()
-  async findAll() {
+  findAll() {
     return this.userService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Roles(Role.Admin)
   @Get(':id')
-  async findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Roles(Role.Admin)
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Roles(Role.Admin)
   @Delete(':id')
-  async remove(@Param('id') id: string) {
+  remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
 }
