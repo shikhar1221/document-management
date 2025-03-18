@@ -1,20 +1,33 @@
 module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
+    project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
-    project: './tsconfig.json',
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'prettier', 'simple-import-sort'],
   extends: [
-    'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
+    'plugin:prettier/recommended',
+    'prettier',
   ],
-  rules: {
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    'no-console': 'warn',
-    'prefer-const': 'error',
+  root: true,
+  env: {
+    node: true,
+    jest: true,
   },
-};
+  ignorePatterns: ['.eslintrc.js', '/dist/**/*'],
+  rules: {
+    '@typescript-eslint/interface-name-prefix': 'off',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    quotes: ['error', 'single'],
+    'import/no-unresolved': 0,
+    semi: ['error', 'never'],
+    'object-curly-spacing': ['error', 'always'],
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['error'],
+    'prettier/prettier': ['error'],
+  },
+}
