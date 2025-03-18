@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, Delete, Req, UseGuards } from '@nestjs/common';
+// src/auth/auth.controller.ts
+import { Controller, Post, Body, Delete, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -21,6 +22,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Delete('logout')
   async logout(@Req() request) {
-    return this.authService.logout(request.user);
+    const token = request.headers.authorization.split(' ')[1];
+    return this.authService.logout(token);
   }
 }
