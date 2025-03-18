@@ -1,8 +1,23 @@
+// src/document/entities/document.entity.ts
+import { Entity, Column, PrimaryGeneratedColumn,CreateDateColumn, UpdateDateColumn } from 'typeorm';
+
+@Entity('documents')
 export class DocumentEntity {
-    id: number;
-    title: string;
-    uploadDate: Date;
-    filePath: string;
-    metadata: string;
-    ingestionStatus: string;
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  title: string;
+
+  @Column()
+  content: string;
+
+  @Column()
+  metadata: Record<string, any>;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

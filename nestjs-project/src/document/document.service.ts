@@ -1,36 +1,159 @@
+// src/document/document.service.ts
 import { Injectable } from '@nestjs/common';
+import * as fs from 'fs';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DocumentEntity } from './entities/document.entity';
+import { DocumentRepository } from './repositories/document.repository';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { UpdateMetadataDto } from './dto/update-metadata.dto';
+import { DocumentEntity } from './entities/document.entity';
+import { extname } from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Multer } from 'multer';
 
 @Injectable()
 export class DocumentService {
   constructor(
-    @InjectRepository(DocumentEntity)
-    private readonly documentRepository: Repository<DocumentEntity>,
+    @InjectRepository(DocumentRepository)
+    private readonly documentRepository: DocumentRepository,
+    private readonly logger: Logger,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(createDocumentDto: CreateDocumentDto): Promise<DocumentEntity> {
-    const document = this.documentRepository.create(createDocumentDto);
-    return this.documentRepository.save(document);
+    try {
+      const document = await this.documentRepository.createDocument(createDocumentDto);
+      this.logger.log(`Document created with ID: ${document.id}`);
+      return document;
+    } catch (error) {
+      this.logger.error('Error creating document:', error);
+      throw error;
+    }
   }
 
   async findAll(): Promise<DocumentEntity[]> {
-    return this.documentRepository.find();
+    try {
+      const documents = await this.documentRepository.findAll();
+      this.logger.log(`Fetched ${documents.length} documents`);
+      return documents;
+    } catch (error) {
+      this.logger.error('Error fetching documents:', error);
+      throw error;
+    }
   }
 
-  async findOne(id: number): Promise<DocumentEntity> {
-    return this.documentRepository.findOne(id);
+  async findOne(id: string): Promise<DocumentEntity> {
+    try {
+      const document = await this.documentRepository.findDocumentById(id);
+      if (!document) {
+        throw new Error(`Document with ID ${id} not found`);
+      }
+      this.logger.log(`Fetched document with ID: ${id}`);
+      return document;
+    } catch (error) {
+      this.logger.error('Error fetching document:', error);
+      throw error;
+    }
   }
 
-  async update(id: number, updateDocumentDto: UpdateDocumentDto): Promise<DocumentEntity> {
-    await this.documentRepository.update(id, updateDocumentDto);
-    return this.findOne(id);
+  async updateMetadata(id: string, updateMetadataDto: UpdateMetadataDto): Promise<DocumentEntity> {
+    try {
+      const document = await this.findOne(id);
+      document.metadata = {
+        ...document.metadata,
+        ...updateMetadataDto.metadata,
+      };
+      const updatedDocument = await this.documentRepository.updateDocument(id, {
+        metadata: document.metadata,
+      });
+      this.logger.log(`Updated metadata for document with ID: ${id}`);
+      return updatedDocument;
+    } catch (error) {
+      this.logger.error('Error updating metadata:', error);
+      throw error;
+    }
   }
 
-  async remove(id: number): Promise<void> {
-    await this.documentRepository.delete(id);
+  async update(
+    id: string,
+    updateDocumentDto: UpdateDocumentDto,
+    file: Multer.File,
+  ): Promise<DocumentEntity> {
+    try {
+      const document = await this.findOne(id);
+      if (updateDocumentDto.title) document.title = updateDocumentDto.title;
+      if (updateDocumentDto.content) document.content = updateDocumentDto.content;
+      
+      // Handle file upload
+      if (file) {
+        const fileName = `${uuidv4()}${extname(file.originalname)}`;
+        const uploadPath = this.configService.get<string>('UPLOAD_DIRECTORY') || './uploads';
+        await this.saveFile(file, `${uploadPath}/${fileName}`);
+        document.metadata = {
+          ...document.metadata,
+          file: {
+            name: file.originalname,
+            path: fileName,
+            size: file.size,
+            type: file.mimetype,
+          },
+        };
+      }
+
+      const updatedDocument = await this.documentRepository.updateDocument(id, document);
+      this.logger.log(`Updated document with ID: ${id}`);
+      return updatedDocument;
+    } catch (error) {
+      this.logger.error('Error updating document:', error);
+      throw error;
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    try {
+      const document = await this.findOne(id);
+      await this.documentRepository.deleteDocument(id);
+      this.logger.log(`Deleted document with ID: ${id}`);
+    } catch (error) {
+      this.logger.error('Error deleting document:', error);
+      throw error;
+    }
+  }
+
+  async uploadFile(id: string, file: Multer.File): Promise<DocumentEntity> {
+    try {
+      const document = await this.findOne(id);
+      const fileName = `${uuidv4()}${extname(file.originalname)}`;
+      const uploadPath = this.configService.get<string>('UPLOAD_DIRECTORY') || './uploads';
+      await this.saveFile(file, `${uploadPath}/${fileName}`);
+      
+      document.metadata = {
+        ...document.metadata,
+        file: {
+          name: file.originalname,
+          path: fileName,
+          size: file.size,
+          type: file.mimetype,
+        },
+      };
+
+      const updatedDocument = await this.documentRepository.updateDocument(id, document);
+      this.logger.log(`Uploaded file to document with ID: ${id}`);
+      return updatedDocument;
+    } catch (error) {
+      this.logger.error('Error uploading file:', error);
+      throw error;
+    }
+  }
+
+  private async saveFile(file: Multer.File, path: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const writeStream = fs.createWriteStream(path);
+      writeStream.on('finish', () => resolve());
+      writeStream.on('error', (error) => reject(error));
+      writeStream.end(file.buffer);
+    });
   }
 }
