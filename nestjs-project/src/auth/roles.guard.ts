@@ -2,20 +2,20 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
-import { Role } from './role.enum';
+import { Role } from './roles.enum';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Injectable()
-export class RolesGuard extends JwtAuthGuard implements CanActivate {
-  constructor(private reflector: Reflector) {
-    super();
-  }
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector, private jwtAuthGuard: JwtAuthGuard) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
-      context.getClass(),
-    ]);
+    ]) || [];
+    if (!this.jwtAuthGuard.canActivate(context)) {
+      return false;
+    }
     if (!requiredRoles) {
       return true;
     }

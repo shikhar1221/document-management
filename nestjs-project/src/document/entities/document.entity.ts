@@ -12,7 +12,7 @@ export class DocumentEntity {
   @Column()
   content: string;
 
-  @Column()
+  @Column({type: 'jsonb', nullable: true})
   metadata: Record<string, any>;
 
   @CreateDateColumn()

@@ -8,10 +8,12 @@ import { UserRepository } from '../auth/repositories/user.repository';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/roles.enum';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity, UserRepository]),
+    AuthModule,
   ],
   controllers: [UserController],
   providers: [UserService, RolesGuard],

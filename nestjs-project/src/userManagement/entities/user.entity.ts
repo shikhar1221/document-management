@@ -1,19 +1,24 @@
-// nestjs-project/src/user/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+
+import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany } from 'typeorm';
+import { Role } from '../../auth/roles.enum';
+import { TokenEntity } from '../../auth/entities/token.entity';
 
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({ unique: true })
+  email: string;
+
   @Column()
   password: string;
 
-  @Column()
-  email: string;
+  @JoinTable()
+  roles: Role[];
 
-  @Column('simple-array')
-  roles: string[];
+  @OneToMany(() => TokenEntity, token => token.user)
+  tokens: TokenEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

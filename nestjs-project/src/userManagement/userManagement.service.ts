@@ -6,7 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 import { Role } from '../auth/roles.enum';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -34,10 +34,11 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
-    return this.userRepository.update(id, updateUserDto);
+    await this.userRepository.update(id, updateUserDto);
+    return this.userRepository.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
-    await this.userRepository.remove(id);
+    await this.userRepository.removeUser(id);
   }
 }

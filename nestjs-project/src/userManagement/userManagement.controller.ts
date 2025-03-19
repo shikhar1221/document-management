@@ -1,6 +1,6 @@
 // src/userManagement/user.controller.ts
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { UserService } from './user.service';
+import { UserService } from './userManagement.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';

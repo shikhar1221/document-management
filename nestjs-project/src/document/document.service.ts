@@ -1,5 +1,5 @@
 // src/document/document.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DocumentRepository } from './repositories/document.repository';
@@ -9,17 +9,20 @@ import { UpdateMetadataDto } from './dto/update-metadata.dto';
 import { DocumentEntity } from './entities/document.entity';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Multer } from 'multer';
 
 @Injectable()
 export class DocumentService {
+  private readonly logger = new Logger(DocumentService.name);
+  private readonly configService = new ConfigService();
+
   constructor(
+    // private readonly configService: ConfigService,
+
     @InjectRepository(DocumentRepository)
     private readonly documentRepository: DocumentRepository,
-    private readonly logger: Logger,
-    private readonly configService: ConfigService,
+    // private readonly logger: Logger,
   ) {}
 
   async create(createDocumentDto: CreateDocumentDto): Promise<DocumentEntity> {

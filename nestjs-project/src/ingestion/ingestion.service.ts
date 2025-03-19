@@ -10,10 +10,11 @@ export class IngestionService implements OnModuleInit, OnModuleDestroy {
   private rabbitMqConnection: amqp.ChannelModel;
   private rabbitMqChannel: amqp.Channel;
   private readonly logger = new Logger(IngestionService.name);
+  private readonly configService = new ConfigService();
 
   constructor(
     private readonly documentService: DocumentService,
-    private readonly configService: ConfigService,
+    // private readonly configService: ConfigService,
     private readonly ingestionStatusRepository: IngestionStatusRepository,
   ) {}
 

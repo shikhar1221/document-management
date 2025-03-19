@@ -1,6 +1,7 @@
-// src/auth/entities/user.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable } from 'typeorm';
+
+import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany } from 'typeorm';
 import { Role } from '../roles.enum';
+import { TokenEntity } from './token.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -13,12 +14,11 @@ export class UserEntity {
   @Column()
   password: string;
 
-  @ManyToMany(() => Role)
   @JoinTable()
   roles: Role[];
 
-  @Column({ default: false })
-  isDeleted: boolean;
+  @OneToMany(() => TokenEntity, token => token.user)
+  tokens: TokenEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
