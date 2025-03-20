@@ -1,5 +1,5 @@
-// src/document/entities/document.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn,CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
+import { UserEntity } from '../../auth/entities/user.entity';
 
 @Entity('documents')
 export class DocumentEntity {
@@ -9,10 +9,28 @@ export class DocumentEntity {
   @Column()
   title: string;
 
-  @Column()
-  content: string;
+  @Column({ nullable: true })
+  description: string;
 
-  @Column({type: 'jsonb', nullable: true})
+  @Column()
+  filePath: string;
+
+  @Column()
+  fileName: string;
+
+  @Column()
+  mimeType: string;
+
+  @Column('bigint')
+  size: number;
+
+  @Column()
+  uploadDate: Date;
+
+  @ManyToOne(() => UserEntity, user => user.documents, { onDelete: 'CASCADE' })
+  user: UserEntity;
+
+  @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, any>;
 
   @CreateDateColumn()

@@ -13,7 +13,7 @@ export class CreateUserDto {
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: ['user'], description: 'The roles of the user', isArray: true })
+  @ApiProperty({ example: ['viewer'], description: 'The roles of the user', isArray: true })
   @IsNotEmpty()
   roles: Role[];
 }

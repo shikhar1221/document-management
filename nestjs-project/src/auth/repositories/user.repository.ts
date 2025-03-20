@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class UserRepository {
-  private repository: Repository<UserEntity>;
+  repository: Repository<UserEntity>;
 
   constructor(private dataSource: DataSource) {
     this.repository = this.dataSource.getRepository(UserEntity);

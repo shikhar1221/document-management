@@ -1,5 +1,5 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { DocumentEntity } from '../../document/entities/document.entity';
 import { Role } from '../roles.enum';
 import { TokenEntity } from './token.entity';
 
@@ -14,11 +14,14 @@ export class UserEntity {
   @Column()
   password: string;
 
-  @Column({type: 'enum', enum: Role, array:true, default: [Role.Viewer]})
+  @Column({ type: 'enum', enum: Role, array: true, default: [Role.Viewer] })
   roles: Role[];
 
   @OneToMany(() => TokenEntity, token => token.user)
   tokens: TokenEntity[];
+
+  @OneToMany(() => DocumentEntity, document => document.user)
+  documents: DocumentEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

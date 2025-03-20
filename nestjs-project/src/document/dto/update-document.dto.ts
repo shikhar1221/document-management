@@ -1,14 +1,34 @@
-// src/document/dto/update-document.dto.ts
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsDate } from 'class-validator';
 
 export class UpdateDocumentDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   title?: string;
 
-  @IsNotEmpty()
-  content?: string;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
+  @IsString()
+  filePath?: string;
+
+  @IsOptional()
+  @IsString()
+  fileName?: string;
+
+  @IsOptional()
+  @IsString()
+  mimeType?: string;
+
+  @IsOptional()
+  @IsNumber()
+  size?: number;
+
+  @IsOptional()
+  @IsDate()
+  uploadDate?: Date;
+
+  @IsOptional()
   metadata?: Record<string, any>;
 }

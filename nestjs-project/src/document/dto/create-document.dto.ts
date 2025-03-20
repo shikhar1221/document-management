@@ -1,14 +1,17 @@
-// src/document/dto/create-document.dto.ts
-import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsDate } from 'class-validator';
 
 export class CreateDocumentDto {
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Title of the document' })
+  @IsOptional()
   @IsString()
-  title: string;
+  title?: string;
 
-  @IsNotEmpty()
-  content: string;
+  @ApiPropertyOptional({ description: 'Description of the document' })
+  @IsOptional()
+  @IsString()
+  description?: string;
 
-  @IsNotEmpty()
-  metadata: Record<string, any>;
+  userId?: string;
+
 }

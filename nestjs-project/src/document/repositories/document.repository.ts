@@ -1,9 +1,9 @@
+
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { DocumentEntity } from '../entities/document.entity';
 import { CreateDocumentDto } from '../dto/create-document.dto';
 import { UpdateDocumentDto } from '../dto/update-document.dto';
-import { UpdateMetadataDto } from '../dto/update-metadata.dto';
 
 @Injectable()
 export class DocumentRepository {
@@ -16,11 +16,11 @@ export class DocumentRepository {
     this.repository = this.dataSource.getRepository(DocumentEntity);
   }
 
-  async createDocument(createDocumentDto: CreateDocumentDto): Promise<DocumentEntity> {
+  async createDocument(doc: DocumentEntity): Promise<DocumentEntity> {
     try {
-      const document = this.repository.create(createDocumentDto);
+      const document = this.repository.create(doc);
       return await this.repository.save(document);
-    } catch (error:any) {
+    } catch (error: any) {
       this.logger.error('Error creating document', error.stack);
       throw error;
     }
@@ -35,17 +35,24 @@ export class DocumentRepository {
     return this.repository.save(document);
   }
 
-  async updateMetadata(id: string, updateMetadataDto: UpdateMetadataDto): Promise<DocumentEntity> {
-    const document = await this.repository.findOne({ where: { id: parseInt(id) } });
-    if (!document) {
-      throw new Error('Document not found');
-    }
-    this.repository.merge(document, updateMetadataDto);
-    return this.repository.save(document);
-  }
+  async findAll(query: any): Promise<DocumentEntity[]> {
+    const { page = 1, limit = 10, filter, sort } = query;
+    const queryBuilder = this.repository.createQueryBuilder('document');
 
-  async findAll(): Promise<DocumentEntity[]> {
-    return this.repository.find();
+    if (filter) {
+      Object.keys(filter).forEach((key) => {
+        queryBuilder.andWhere(`document.${key} LIKE :${key}`, { [key]: `%${filter[key]}%` });
+      });
+    }
+
+    if (sort) {
+      const [sortField, sortOrder] = sort.split(':');
+      queryBuilder.orderBy(`document.${sortField}`, sortOrder.toUpperCase() as 'ASC' | 'DESC');
+    }
+
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    return queryBuilder.getMany();
   }
 
   async findOneById(id: string): Promise<DocumentEntity> {
