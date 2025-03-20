@@ -1,5 +1,5 @@
 
-import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany, ManyToMany } from 'typeorm';
 import { Role } from '../roles.enum';
 import { TokenEntity } from './token.entity';
 
@@ -14,7 +14,7 @@ export class UserEntity {
   @Column()
   password: string;
 
-  @JoinTable()
+  @Column({type: 'enum', enum: Role, array:true, default: [Role.Viewer]})
   roles: Role[];
 
   @OneToMany(() => TokenEntity, token => token.user)

@@ -30,9 +30,10 @@ export class AuthService {
     const user = await this.userRepository.findByEmail(loginDto.email);
     if (user && (await bcrypt.compare(loginDto.password, user.password))) {
       const payload = { email: user.email, sub: user.id, roles: user.roles };
+      console.log('payload: ', payload);
       const accessToken = this.jwtService.sign(payload);
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour expiration
-      await this.tokenRepository.invalidateToken(accessToken, user, expiresAt);
+      await this.tokenRepository.createToken(accessToken, user, expiresAt);
       return { accessToken };
     }
     throw new Error('Invalid credentials');
@@ -42,7 +43,7 @@ export class AuthService {
     const decodedToken = this.jwtService.decode(token) as any;
     const user = await this.userRepository.findOneById(decodedToken.sub);
     if (user) {
-      await this.tokenRepository.invalidateToken(token, user, new Date());
+      await this.tokenRepository.invalidateToken(token);
     }
   }
 

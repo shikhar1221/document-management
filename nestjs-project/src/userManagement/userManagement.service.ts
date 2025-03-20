@@ -11,9 +11,7 @@ import * as bcrypt from 'bcryptjs';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(UserRepository)
-    private readonly userRepository: UserRepository,
-  ) {}
+    private readonly userRepository: UserRepository ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);

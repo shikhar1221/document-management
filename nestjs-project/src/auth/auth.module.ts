@@ -11,14 +11,20 @@ import { TokenEntity } from './entities/token.entity';
 import { UserRepository } from './repositories/user.repository';
 import { TokenRepository } from './repositories/token.repository';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([UserEntity, TokenEntity]),
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'test-secret',
-      signOptions: { expiresIn: '60m' },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET') || 'your_jwt_secret',
+        signOptions: { expiresIn: '60m' },
+      }),
     }),
   ],
   controllers: [AuthController],
@@ -28,8 +34,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
-    JwtService,
   ],
-  exports: [AuthService, JwtAuthGuard, JwtModule, JwtService],
+  exports: [AuthService, JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}

@@ -12,11 +12,11 @@ import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, UserRepository]),
+    TypeOrmModule.forFeature([UserEntity]),
     AuthModule,
   ],
   controllers: [UserController],
-  providers: [UserService, RolesGuard],
+  providers: [UserService, RolesGuard, UserRepository],
   exports: [UserService],
 })
 export class UserManagementModule {}
