@@ -14,6 +14,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpException } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DocumentEntity } from './entities/document.entity';
+import * as path from 'path';
 
 @ApiTags('Document Management APIs')
 @ApiBearerAuth()
@@ -61,7 +62,6 @@ export class DocumentController {
       createDocumentDto.title= title;
       createDocumentDto.description= description;
       createDocumentDto.userId= req.user.sub;
-      console.log(createDocumentDto);
       return await this.documentService.create(createDocumentDto, file);
     } catch (error) {
       throw new HttpException('Failed to create document', 500);
@@ -102,9 +102,10 @@ export class DocumentController {
   async download(@Param('id') id: string, @Res() res: Response) {
     try {
       const file = await this.documentService.downloadFile(id);
+      const absolutePath = path.resolve(file.path);
       res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
       res.setHeader('Content-Type', file.type);
-      res.sendFile(file.path);
+      res.sendFile(absolutePath);
     } catch (error) {
       throw new HttpException('Failed to download document', 500);
     }
@@ -135,6 +136,8 @@ export class DocumentController {
   @ApiResponse({ status: 200, description: 'The document has been successfully deleted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async remove(@Param('id') id: string) {
+    console.log('id', id);
+
     try {
       await this.documentService.remove(id);
       return { message: 'Document deleted successfully' };

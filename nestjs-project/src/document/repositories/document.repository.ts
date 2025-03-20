@@ -61,6 +61,7 @@ export class DocumentRepository {
 
   async removeDocument(id: string): Promise<DocumentEntity> {
     const document = await this.repository.findOne({ where: { id: parseInt(id) } });
+    console.log(document);
     if (!document) {
       throw new Error('Document not found');
     }

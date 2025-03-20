@@ -39,6 +39,17 @@ async function bootstrap() {
 
   // Graceful shutdown
   app.enableShutdownHooks();
+    process.on('SIGINT', async () => {
+      Logger.log('SIGINT signal received: closing HTTP server');
+      await app.close();
+      process.exit(0);
+    });
+  
+    process.on('SIGTERM', async () => {
+      Logger.log('SIGTERM signal received: closing HTTP server');
+      await app.close();
+      process.exit(0);
+    });
 
   // Create RabbitMQ microservice options
   const microserviceOptions: MicroserviceOptions = {

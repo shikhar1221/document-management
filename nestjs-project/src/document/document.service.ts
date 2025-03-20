@@ -41,7 +41,7 @@ export class DocumentService {
           type: file.mimetype,
         },
       };
-      const document = await this.documentRepository.createDocument(doc);
+      let document: DocumentEntity;
 
       // Update the user's document list
       const user = await this.userRepository.findOneById(createDocumentDto.userId);
@@ -50,6 +50,7 @@ export class DocumentService {
           user.documents = [];
         }
         doc.user=user;
+        document = await this.documentRepository.createDocument(doc);
         user.documents.push(document);
         await this.userRepository.repository.save(user);
       }
@@ -129,6 +130,7 @@ export class DocumentService {
         throw new Error(`Document with ID ${id} not found`);
       }
 
+      console.log('document', document);
       // Find the user associated with the document
       const user = await this.userRepository.findOneById(document.user.id.toString());
       if (user) {
@@ -152,7 +154,11 @@ export class DocumentService {
       if (!document || !document.metadata.file) {
         throw new Error(`File for document with ID ${id} not found`);
       }
-      return document.metadata.file;
+      return {
+        name: document.metadata.file.name,
+        path: document.filePath,
+        type: document.metadata.file.type,
+      }
     } catch (error) {
       this.logger.error('Error downloading file:', error);
       throw error;
