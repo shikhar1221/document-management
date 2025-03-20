@@ -5,13 +5,15 @@ import { DocumentController } from './document.controller';
 import { DocumentService } from './document.service';
 import { DocumentEntity } from './entities/document.entity';
 import { DocumentRepository } from './repositories/document.repository';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DocumentEntity, DocumentRepository]),
+    TypeOrmModule.forFeature([DocumentEntity]),
+    AuthModule,
   ],
   controllers: [DocumentController],
-  providers: [DocumentService],
+  providers: [DocumentService, DocumentRepository],
   exports: [DocumentService],
 })
 export class DocumentModule {}

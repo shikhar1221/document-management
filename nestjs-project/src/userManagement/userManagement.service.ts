@@ -30,12 +30,12 @@ export class UserService {
   }
 
   async findOne(id: string): Promise<UserEntity> {
-    return this.userRepository.findOne(id);
+    return this.userRepository.findOneById(id);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
-    await this.userRepository.update(id, updateUserDto);
-    return this.userRepository.findOne(id);
+    await this.userRepository.updateUser(id, updateUserDto);
+    return this.userRepository.findOneById(id);
   }
 
   async remove(id: string): Promise<void> {

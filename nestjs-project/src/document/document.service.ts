@@ -20,7 +20,6 @@ export class DocumentService {
   constructor(
     // private readonly configService: ConfigService,
 
-    @InjectRepository(DocumentRepository)
     private readonly documentRepository: DocumentRepository,
     // private readonly logger: Logger,
   ) {}
@@ -49,7 +48,7 @@ export class DocumentService {
 
   async findOne(id: string): Promise<DocumentEntity> {
     try {
-      const document = await this.documentRepository.findDocumentById(id);
+      const document = await this.documentRepository.findOneById(id);
       if (!document) {
         throw new Error(`Document with ID ${id} not found`);
       }
@@ -117,7 +116,7 @@ export class DocumentService {
   async remove(id: string): Promise<void> {
     try {
       const document = await this.findOne(id);
-      await this.documentRepository.deleteDocument(id);
+      await this.documentRepository.removeDocument(id);
       this.logger.log(`Deleted document with ID: ${id}`);
     } catch (error) {
       this.logger.error('Error deleting document:', error);

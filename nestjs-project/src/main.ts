@@ -1,4 +1,3 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
@@ -19,20 +18,12 @@ async function bootstrap() {
   // Use Helmet to secure the app by setting various HTTP headers
   app.use(helmet());
 
-  // Enable rate limiting to prevent DDoS attacks
-  app.use(
-    rateLimit({
-      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000, // 15 minutes
-      max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100, // limit each IP to 100 requests per windowMs
-    }),
-  );
-
   // Use global validation pipe for DTO validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip properties that do not have any decorators
-      forbidNonWhitelisted: true, // Throw an error if non-whitelisted properties are present
-      transform: true, // Automatically transform payloads to be objects typed according to their DTO classes
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
@@ -61,11 +52,13 @@ async function bootstrap() {
     },
   };
 
-  // Create and start the RabbitMQ microservice
-  const microserviceApp = await NestFactory.createMicroservice(AppModule, microserviceOptions);
-  await microserviceApp.listen();
+  // Connect the microservice to the existing app instance
+  app.connectMicroservice(microserviceOptions);
 
+  // Start both the HTTP server and the microservice
+  await app.startAllMicroservices();
   await app.listen(port);
+
   Logger.log(`Application is running on: http://localhost:${port}`);
   Logger.log(`RabbitMQ microservice is connected to: ${microserviceOptions.options.urls}`);
 }

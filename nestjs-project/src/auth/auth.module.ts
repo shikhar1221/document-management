@@ -1,9 +1,9 @@
-// src/auth/auth.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Connection } from 'typeorm';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { UserEntity } from './entities/user.entity';
@@ -14,15 +14,22 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, TokenEntity, UserRepository, TokenRepository]),
+    TypeOrmModule.forFeature([UserEntity, TokenEntity]),
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
+      secret: process.env.JWT_SECRET || 'test-secret',
       signOptions: { expiresIn: '60m' },
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
-  exports: [AuthService, JwtAuthGuard],
+  providers: [
+    UserRepository,
+    TokenRepository,
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    JwtService,
+  ],
+  exports: [AuthService, JwtAuthGuard, JwtModule, JwtService],
 })
 export class AuthModule {}

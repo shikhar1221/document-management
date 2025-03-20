@@ -1,21 +1,17 @@
-// src/auth/auth.service.ts
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { UserRepository } from './repositories/user.repository';
 import { TokenRepository } from './repositories/token.repository';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserEntity } from './entities/user.entity';
 import { Role } from './roles.enum';
-import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(UserRepository)
     private readonly userRepository: UserRepository,
-    @InjectRepository(TokenRepository)
     private readonly tokenRepository: TokenRepository,
     private readonly jwtService: JwtService,
   ) {}
@@ -44,7 +40,7 @@ export class AuthService {
 
   async logout(token: string): Promise<void> {
     const decodedToken = this.jwtService.decode(token) as any;
-    const user = await this.userRepository.findOne(decodedToken.sub);
+    const user = await this.userRepository.findOneById(decodedToken.sub);
     if (user) {
       await this.tokenRepository.invalidateToken(token, user, new Date());
     }

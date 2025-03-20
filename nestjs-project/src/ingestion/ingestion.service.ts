@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { CreateIngestionStatusDto } from './dto/create-ingestion-status.dto';
 import { IngestionStatusRepository } from './repositories/ingestion-status.repository';
 import * as amqp from 'amqplib';
+import { lastValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class IngestionService implements OnModuleInit, OnModuleDestroy {
@@ -16,6 +18,8 @@ export class IngestionService implements OnModuleInit, OnModuleDestroy {
     private readonly documentService: DocumentService,
     // private readonly configService: ConfigService,
     private readonly ingestionStatusRepository: IngestionStatusRepository,
+    private readonly httpService: HttpService,
+
   ) {}
 
   async onModuleInit() {
@@ -120,33 +124,14 @@ export class IngestionService implements OnModuleInit, OnModuleDestroy {
 
   async getIngestionStatus(documentId: string): Promise<string> {
     try {
-      const status = await this.ingestionStatusRepository.findOne({
-        where: { documentId },
-      });
+      const pythonServiceUrl = this.configService.get<string>('PYTHON_SERVICE_URL');
+      const url = `${pythonServiceUrl}/ingestion-status/${documentId}`;
 
-      if (!status) {
-        throw new Error('Ingestion not found');
-      }
-
-      return status.status;
-    } catch (error:any) {
+      const response = await lastValueFrom(this.httpService.get(url));
+      return response.data.status;
+    } catch (error: any) {
+      this.logger.error(`Failed to get ingestion status from Python service: ${error.message}`);
       throw new Error(`Failed to get ingestion status: ${error.message}`);
-    }
-  }
-
-  async updateIngestionStatus(documentId: string, newStatus: string): Promise<void> {
-    try {
-      const status = await this.ingestionStatusRepository.findOne({
-        where: { documentId },
-      });
-
-      if (status) {
-        status.status = newStatus;
-        status.updatedAt = new Date();
-        await this.ingestionStatusRepository.save(status);
-      }
-    } catch (error:any) {
-      throw new Error(`Failed to update ingestion status: ${error.message}`);
     }
   }
 }

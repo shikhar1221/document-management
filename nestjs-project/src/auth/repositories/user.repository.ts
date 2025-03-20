@@ -1,44 +1,50 @@
-import { EntityRepository, Repository, UpdateResult } from 'typeorm';
-import { UserEntity } from '../../userManagement/entities/user.entity';
+import { DataSource, Repository } from 'typeorm';
+import { UserEntity } from '../entities/user.entity';
 import { UpdateUserDto } from '../../userManagement/dto/update-user.dto';
+import { Injectable } from '@nestjs/common';
 
-@EntityRepository(UserEntity)
-export class UserRepository extends Repository<UserEntity> {
+@Injectable()
+export class UserRepository {
+  private repository: Repository<UserEntity>;
+
+  constructor(private dataSource: DataSource) {
+    this.repository = this.dataSource.getRepository(UserEntity);
+  }
+  
   async findByEmail(email: string): Promise<UserEntity> {
-    return this.findOne({ where: { email } });
+    return this.repository.findOne({ where: { email } });
   }
 
   async createUser(user: Partial<UserEntity>): Promise<UserEntity> {
-    const newUser = this.create(user);
-    return this.save(newUser);
+    const newUser = this.repository.create(user);
+    return this.repository.save(newUser);
   }
 
   async findAll(): Promise<UserEntity[]> {
-    return this.find({ where: { isDeleted: false } });
+    return this.repository.find();
   }
 
   async findOneById(id: string): Promise<UserEntity> {
-    return this.findOne({ where: { id: parseInt(id), isDeleted: false } });
+    return this.repository.findOne({ where: { id: parseInt(id), } });
   }
 
-  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<UpdateResult> {
-    const user = await this.findOne(id);
+  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<any> {
+    const user = await this.repository.findOne({ where: { id: parseInt(id), } });
     if (!user) {
       throw new Error('User not found');
     }
     
     // Merge the updateUserDto with the existing user
-    const updatedUser = this.merge(user, updateUserDto);
-    return this.save(updatedUser).then(() => ({ raw: {}, generatedMaps: [] }));
+    const updatedUser = this.repository.merge(user, updateUserDto);
+    return this.repository.save(updatedUser);
   }
 
   async removeUser(id: string): Promise<UserEntity> {
-    const user = await this.findOne(id);
+    const user = await this.repository.findOne({ where: { id: parseInt(id), } });
     if (!user) {
       throw new Error('User not found');
     }
     
-    const res=this.remove(user);
-    return res;
+    return this.repository.remove(user);
   }
 }
