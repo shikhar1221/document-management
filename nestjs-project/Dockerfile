@@ -1,29 +1,25 @@
-# Use the official Node.js 16 image as the base image
-FROM node:16
 
-# Install pnpm globally
-RUN npm install -g pnpm
-
-# Set the working directory inside the container
+# Stage 1: Build
+FROM --platform=linux/amd64 node:20 AS builder
 WORKDIR /usr/src/app
 
-# Copy package.json and pnpm-lock.yaml to the working directory
-COPY package.json pnpm-lock.yaml ./
+# # A wildcard is used to ensure both package.json AND package-lock.json are copied
+# COPY package*.json ./
 
-# Install the application dependencies using pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+RUN corepack prepare pnpm@latest --activate
+# # Install pnpm globally
+# RUN npm install -g pnpm
+# Copy dependency files and install dependencies using pnpm
+COPY package*.json pnpm-lock.yaml ./
 RUN pnpm install
-
-# Copy the rest of the application code to the working directory
+# Copy the rest of the application code and build the project
 COPY . .
-
-# Build the NestJS application
+# Copy the .env and .env.development files
+COPY .env ./
 RUN pnpm run build
 
-# Expose the application port
 EXPOSE 3000
-
-# Set the environment variable for production
-ENV NODE_ENV=production
-
-# Start the application
 CMD ["pnpm", "run", "start:prod"]
