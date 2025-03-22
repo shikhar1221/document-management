@@ -24,14 +24,4 @@ export class AuthController {
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
-
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Logout a user' })
-  @ApiResponse({ status: 200, description: 'User logged out successfully.' })
-  @UseGuards(JwtAuthGuard)
-  @Delete('logout')
-  async logout(@Req() request) {
-    const token = request.headers.authorization.split(' ')[1];
-    return this.authService.logout(token);
-  }
 }

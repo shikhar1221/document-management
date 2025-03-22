@@ -1,8 +1,9 @@
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
-import * as rateLimit from 'express-rate-limit';
+import rateLimit from 'express-rate-limit';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -18,12 +19,12 @@ async function bootstrap() {
   app.use(helmet());
 
   // Optionally, apply rate limiting if needed
-  // app.use(
-  //   rateLimit({
-  //     windowMs: 15 * 60 * 1000, // 15 minutes
-  //     max: 100, // limit each IP to 100 requests per windowMs
-  //   }),
-  // );
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 100, // limit each IP to 100 requests per windowMs
+    }),
+  );
 
   // Use global validation pipe for DTO validation
   app.useGlobalPipes(

@@ -27,9 +27,7 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
-    console.log('loginDto: ', loginDto);
     const user = await this.userRepository.findByEmail(loginDto.email);
-    console.log('user: ', user);
     if (user && (await bcrypt.compare(loginDto.password, user.password))) {
       const payload = { email: user.email, sub: user.id, roles: user.roles };
       console.log('payload: ', payload);
@@ -39,14 +37,6 @@ export class AuthService {
       return { accessToken };
     }
     throw new Error('Invalid credentials');
-  }
-
-  async logout(token: string): Promise<void> {
-    const decodedToken = this.jwtService.decode(token) as any;
-    const user = await this.userRepository.findOneById(decodedToken.sub);
-    if (user) {
-      await this.tokenRepository.invalidateToken(token);
-    }
   }
 
   async isTokenBlacklisted(token: string): Promise<boolean> {

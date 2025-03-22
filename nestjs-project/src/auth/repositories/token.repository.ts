@@ -20,8 +20,4 @@ export class TokenRepository {
     const tokenEntity = await this.repository.findOne({ where: { token } });
     return !tokenEntity;
   }
-
-  async invalidateToken(token: string): Promise<void> {
-    await this.repository.delete({ token });
-  }
 }
