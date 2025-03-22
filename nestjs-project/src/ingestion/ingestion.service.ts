@@ -1,137 +1,214 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { DocumentService } from '../document/document.service';
-import { ConfigService } from '@nestjs/config';
-import { CreateIngestionStatusDto } from './dto/create-ingestion-status.dto';
-import { IngestionStatusRepository } from './repositories/ingestion-status.repository';
-import * as amqp from 'amqplib';
-import { lastValueFrom } from 'rxjs';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { firstValueFrom } from 'rxjs';
+import { timeout, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { AxiosError } from 'axios';
+import { DocumentService } from '../document/document.service';
+import { IngestionStatusRepository } from './repositories/ingestion-status.repository';
+import { IngestionStatus } from './entities/ingestion-status.entity';
+import { IngestionStatusEnum } from './enums/ingestion-status.enum';
+
+interface PythonResponse {
+  data: {
+    status: IngestionStatusEnum;
+    metadata?: Record<string, any>;
+    error?: string;
+  };
+}
+
+interface IngestionMetadata {
+  retryCount: number;
+  startTime: string;
+  lastChecked?: string;
+  lastRetry?: string;
+  fileName?: string;
+  filePath?: string;
+  mimeType?: string;
+  size?: number;
+}
 
 @Injectable()
-export class IngestionService implements OnModuleInit, OnModuleDestroy {
-  private rabbitMqConnection: amqp.ChannelModel;
-  private rabbitMqChannel: amqp.Channel;
+export class IngestionService {
   private readonly logger = new Logger(IngestionService.name);
-  private readonly configService = new ConfigService();
+  private readonly pythonBackendTimeout = 5000;
+  private readonly maxRetries = 3;
 
   constructor(
-    private readonly documentService: DocumentService,
-    // private readonly configService: ConfigService,
-    private readonly ingestionStatusRepository: IngestionStatusRepository,
+    private readonly configService: ConfigService,
     private readonly httpService: HttpService,
-
+    private readonly documentService: DocumentService,
+    private readonly ingestionStatusRepository: IngestionStatusRepository,
   ) {}
 
-  async onModuleInit() {
-    await this.initializeRabbitMq();
-  }
-
-  async onModuleDestroy() {
-    await this.closeRabbitMqConnection();
-  }
-
-  private async initializeRabbitMq() {
+  async triggerIngestion(documentId: string): Promise<IngestionStatus> {
     try {
-      const rabbitMqUrl = this.configService.get<string>('RABBITMQ_URL');
-      
-      if (!rabbitMqUrl) {
-        throw new Error('RABBITMQ_URL is not defined in configuration');
-      }
-      
-      // Connect to RabbitMQ and get a ChannelModel
-      this.rabbitMqConnection = await amqp.connect(rabbitMqUrl);
-      this.rabbitMqChannel = await this.rabbitMqConnection.createChannel();
-      
-      // Assert the queue exists
-      await this.rabbitMqChannel.assertQueue('ingestion_queue', { durable: true });
-      
-      this.logger.log('Successfully connected to RabbitMQ');
-      
-      // Setup connection error handlers
-      this.rabbitMqConnection.on('error', (err) => {
-        this.logger.error(`RabbitMQ connection error: ${err.message}`);
-        this.reconnectRabbitMq();
+      const numericDocId = parseInt(documentId, 10);
+      const document = await this.documentService.findOne(documentId);
+
+      const ingestionStatus = await this.ingestionStatusRepository.save({
+        documentId: numericDocId,
+        status: IngestionStatusEnum.PENDING,
+        metadata: {
+          retryCount: 0,
+          startTime: new Date().toISOString(),
+          fileName: document.fileName,
+          filePath: document.filePath,
+          mimeType: document.mimeType,
+          size: document.size,
+        } as IngestionMetadata,
       });
-      
-      this.rabbitMqConnection.on('close', () => {
-        this.logger.warn('RabbitMQ connection closed');
-        this.reconnectRabbitMq();
-      });
-    } catch (error:any) {
-      this.logger.error(`Failed to initialize RabbitMQ: ${error.message}`);
-      // Attempt to reconnect after a delay
-      setTimeout(() => this.reconnectRabbitMq(), 5000);
-    }
-  }
 
-  private async reconnectRabbitMq() {
-    try {
-      if (this.rabbitMqChannel) {
-        await this.rabbitMqChannel.close().catch(() => {});
-      }
-      if (this.rabbitMqConnection) {
-        await this.rabbitMqConnection.close().catch(() => {});
-      }
-    } catch (error:any) {
-      this.logger.error(`Error closing RabbitMQ connections: ${error.message}`);
-    }
-    
-    this.logger.log('Attempting to reconnect to RabbitMQ...');
-    setTimeout(() => this.initializeRabbitMq(), 5000);
-  }
-
-  private async closeRabbitMqConnection() {
-    try {
-      if (this.rabbitMqChannel) {
-        await this.rabbitMqChannel.close();
-      }
-      if (this.rabbitMqConnection) {
-        await this.rabbitMqConnection.close();
-      }
-      this.logger.log('RabbitMQ connections closed');
-    } catch (error:any) {
-      this.logger.error(`Error closing RabbitMQ connections: ${error.message}`);
-    }
-  }
-
-  async triggerIngestion(documentId: string): Promise<string> {
-    try {
-      // Create ingestion status record
-      const ingestionStatus = new CreateIngestionStatusDto();
-      ingestionStatus.documentId = documentId;
-      ingestionStatus.status = 'pending';
-      ingestionStatus.startedAt = new Date();
-      await this.ingestionStatusRepository.createIngestionStatus(ingestionStatus);
-
-      // Ensure we have a connection before sending
-      if (!this.rabbitMqChannel) {
-        await this.initializeRabbitMq();
+      const pythonBackendUrl = this.configService.get<string>('PYTHON_BACKEND_URL');
+      if (!pythonBackendUrl) {
+        throw new HttpException('Python backend URL not configured', HttpStatus.SERVICE_UNAVAILABLE);
       }
 
-      // Send message to RabbitMQ queue
-      this.rabbitMqChannel.sendToQueue(
-        'ingestion_queue',
-        Buffer.from(JSON.stringify({ documentId })),
-        { persistent: true }
+      await firstValueFrom(
+        this.httpService.post<PythonResponse>(`${pythonBackendUrl}/ingest`, {
+          documentId: numericDocId,
+          ingestionId: ingestionStatus.id,
+          filePath: document.filePath,
+          metadata: {
+            fileName: document.fileName,
+            filePath: document.filePath,
+            mimeType: document.mimeType,
+            size: document.size,
+          },
+        }).pipe(
+          timeout(this.pythonBackendTimeout),
+          catchError((error: AxiosError) => {
+            this.logger.error(`Failed to notify Python backend: ${error.message}`);
+            throw new HttpException(
+              'Failed to communicate with Python backend',
+              HttpStatus.SERVICE_UNAVAILABLE,
+            );
+          }),
+        ),
       );
 
-      return `Ingestion triggered for document ${documentId}`;
-    } catch (error:any) {
-      this.logger.error(`Failed to trigger ingestion: ${error.message}`);
-      throw new Error(`Failed to trigger ingestion: ${error.message}`);
+      return ingestionStatus;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(`Failed to trigger ingestion: ${(error as Error).message}`);
+      throw new HttpException(
+        'Failed to trigger document ingestion',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
-  async getIngestionStatus(documentId: string): Promise<string> {
+  async getIngestionStatus(documentId: string): Promise<IngestionStatus> {
     try {
-      const pythonServiceUrl = this.configService.get<string>('PYTHON_SERVICE_URL');
-      const url = `${pythonServiceUrl}/ingestion-status/${documentId}`;
+      const numericDocId = parseInt(documentId, 10);
+      const status = await this.ingestionStatusRepository.findOne({
+        where: { documentId: numericDocId },
+      });
 
-      const response = await lastValueFrom(this.httpService.get(url));
-      return response.data.status;
-    } catch (error: any) {
-      this.logger.error(`Failed to get ingestion status from Python service: ${error.message}`);
-      throw new Error(`Failed to get ingestion status: ${error.message}`);
+      if (!status) {
+        throw new HttpException('Ingestion status not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (this.isStatusFinal(status.status)) {
+        return status;
+      }
+
+      const pythonBackendUrl = this.configService.get<string>('PYTHON_BACKEND_URL');
+      if (!pythonBackendUrl) {
+        this.logger.warn('Python backend URL not configured, using local status');
+        return status;
+      }
+
+      const response = await firstValueFrom(
+        this.httpService.get<PythonResponse>(`${pythonBackendUrl}/status/${status.id}`).pipe(
+          timeout(this.pythonBackendTimeout),
+          catchError((error: AxiosError) => {
+            this.logger.warn(`Failed to get status from Python backend: ${error.message}`);
+            return of({
+              data: {
+                status: status.status,
+                metadata: status.metadata,
+              },
+            });
+          }),
+        ),
+      );
+
+      if (response.data.status !== status.status) {
+        const updatedStatus = await this.updateStatus(status.id, {
+          status: response.data.status,
+          metadata: {
+            ...status.metadata,
+            ...response.data.metadata,
+            lastChecked: new Date().toISOString(),
+          },
+          error: response.data.error,
+        });
+
+        if (
+          updatedStatus.status === IngestionStatusEnum.FAILED &&
+          this.canRetry(updatedStatus)
+        ) {
+          return this.retryIngestion(updatedStatus);
+        }
+
+        return updatedStatus;
+      }
+
+      return status;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      this.logger.error(`Error checking status: ${(error as Error).message}`);
+      throw new HttpException(
+        'Failed to get ingestion status',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
+  }
+
+  private isStatusFinal(status: IngestionStatusEnum): boolean {
+    return status === IngestionStatusEnum.COMPLETED || 
+           status === IngestionStatusEnum.FAILED;
+  }
+
+  private canRetry(status: IngestionStatus): boolean {
+    return (status.metadata?.retryCount || 0) < this.maxRetries;
+  }
+
+  private async updateStatus(
+    ingestionId: number,
+    update: Partial<IngestionStatus>,
+  ): Promise<IngestionStatus> {
+    return this.ingestionStatusRepository.save({
+      id: ingestionId,
+      ...update,
+      updatedAt: new Date(),
+    });
+  }
+
+  async retryIngestion(status: IngestionStatus): Promise<IngestionStatus> {
+    if (!this.canRetry(status)) {
+      this.logger.warn(
+        `Maximum retry attempts (${this.maxRetries}) reached for document ${status.documentId}`,
+      );
+      return status;
+    }
+
+    const retryCount = (status.metadata?.retryCount || 0) + 1;
+    return this.updateStatus(status.id, {
+      status: IngestionStatusEnum.PENDING,
+      metadata: {
+        ...status.metadata,
+        retryCount,
+        lastRetry: new Date().toISOString(),
+      },
+      error: null,
+    });
   }
 }

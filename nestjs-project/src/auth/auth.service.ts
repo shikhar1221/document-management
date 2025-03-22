@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcrypt';
 import { UserRepository } from './repositories/user.repository';
 import { TokenRepository } from './repositories/token.repository';
 import { RegisterDto } from './dto/register.dto';
@@ -27,7 +27,9 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
+    console.log('loginDto: ', loginDto);
     const user = await this.userRepository.findByEmail(loginDto.email);
+    console.log('user: ', user);
     if (user && (await bcrypt.compare(loginDto.password, user.password))) {
       const payload = { email: user.email, sub: user.id, roles: user.roles };
       console.log('payload: ', payload);

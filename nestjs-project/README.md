@@ -21,7 +21,7 @@ This project is a NestJS-based backend for a document management system with fea
 
 2. Install dependencies:
    ```
-   npm install
+   pnpm install
    ```
 
 3. Set up your PostgreSQL database and update the connection settings in the `.env` file.
