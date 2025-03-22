@@ -136,3 +136,6 @@ dist
 .pnp.*
 .qodo
 nestjs-project/pnpm-lock.yaml
+
+#uploads folder
+./uploads
