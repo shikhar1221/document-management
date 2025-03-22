@@ -125,23 +125,29 @@ export class DocumentService {
 
   async remove(id: string): Promise<void> {
     try {
-      const document = await this.findOne(id);
+      const document = await this.findOneDocumentByIdWithUser(id);
       if (!document) {
         throw new Error(`Document with ID ${id} not found`);
       }
 
-      console.log('document', document);
-      // Find the user associated with the document
-      const user = await this.userRepository.findOneById(document.user.id.toString());
-      if (user) {
-        // Remove the document from the user's document list
+    // Find the user associated with the document
+    const userId= document.user;
+
+    const user = await this.userRepository.findOneById(userId.id.toString());
+    if (user) {
+      // Remove the document from the user's document list
+      if (user.documents && Array.isArray(user.documents)) {
         user.documents = user.documents.filter(doc => doc.id !== document.id);
         await this.userRepository.repository.save(user);
+      } else {
+        this.logger.warn('User documents is not defined, cannot filter document removal');
       }
+    
 
       // Remove the document itself
       await this.documentRepository.removeDocument(id);
       this.logger.log(`Deleted document with ID: ${id}`);
+      }
     } catch (error) {
       this.logger.error('Error deleting document:', error);
       throw error;
@@ -171,6 +177,13 @@ export class DocumentService {
       writeStream.on('finish', () => resolve());
       writeStream.on('error', (error) => reject(error));
       writeStream.end(file.buffer);
+    });
+  }
+
+  private async findOneDocumentByIdWithUser(id: string): Promise<DocumentEntity> {
+    return this.documentRepository.repository.findOne({
+      where: { id: parseInt(id) },
+      relations: ['user'], // <-- Ensures the user object is loaded
     });
   }
 }

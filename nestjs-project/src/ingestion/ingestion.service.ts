@@ -11,14 +11,6 @@ import { IngestionStatusRepository } from './repositories/ingestion-status.repos
 import { IngestionStatus } from './entities/ingestion-status.entity';
 import { IngestionStatusEnum } from './enums/ingestion-status.enum';
 
-interface PythonResponse {
-  data: {
-    status: IngestionStatusEnum;
-    metadata?: Record<string, any>;
-    error?: string;
-  };
-}
-
 interface IngestionMetadata {
   retryCount: number;
   startTime: string;
@@ -48,6 +40,7 @@ export class IngestionService {
       const numericDocId = parseInt(documentId, 10);
       const document = await this.documentService.findOne(documentId);
 
+      console.log(`Triggering ingestion for document: ${documentId}`);
       const ingestionStatus = await this.ingestionStatusRepository.save({
         documentId: numericDocId,
         status: IngestionStatusEnum.PENDING,
@@ -59,6 +52,7 @@ export class IngestionService {
           mimeType: document.mimeType,
           size: document.size,
         } as IngestionMetadata,
+        startedAt: new Date(),
       });
 
       const pythonBackendUrl = this.configService.get<string>('PYTHON_BACKEND_URL');
@@ -67,7 +61,7 @@ export class IngestionService {
       }
 
       await firstValueFrom(
-        this.httpService.post<PythonResponse>(`${pythonBackendUrl}/ingest`, {
+        this.httpService.post(`${pythonBackendUrl}/ingest`, {
           documentId: numericDocId,
           ingestionId: ingestionStatus.id,
           filePath: document.filePath,
@@ -103,73 +97,85 @@ export class IngestionService {
   }
 
   async getIngestionStatus(documentId: string): Promise<IngestionStatus> {
-    try {
-      const numericDocId = parseInt(documentId, 10);
-      const status = await this.ingestionStatusRepository.findOne({
-        where: { documentId: numericDocId },
+  try {
+    const numericDocId = parseInt(documentId, 10);
+    const status = await this.ingestionStatusRepository.findOne({
+      where: { documentId: numericDocId },
+    });
+
+    if (!status) {
+      throw new HttpException('Ingestion status not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (this.isStatusFinal(status.status)) {
+      return status;
+    }
+
+    const pythonBackendUrl = this.configService.get<string>('PYTHON_BACKEND_URL');
+    if (!pythonBackendUrl) {
+      this.logger.warn('Python backend URL not configured, using local status');
+      return status;
+    }
+
+    const response = await firstValueFrom(
+      this.httpService.get<{ status: IngestionStatusEnum; metadata: Record<string, any>; error?: string }>(
+        `${pythonBackendUrl}/status/${status.id}`
+      ).pipe(
+        timeout(this.pythonBackendTimeout),
+        catchError((error: AxiosError) => {
+          this.logger.warn(`Failed to get status from Python backend: ${error.message}`);
+          return of({
+            data: {
+              status: status.status,
+              metadata: status.metadata,
+              error: 'Failed to fetch status from Python backend',
+            }
+          });
+        }),
+      ),
+    );
+
+    if (response.data.status !== status.status) {
+      const updatedStatus = await this.updateStatus(status.id, {
+        status: response.data.status,
+        metadata: {
+          ...status.metadata,
+          ...response.data.metadata,
+          lastChecked: new Date().toISOString(),
+        },
+        error: response.data.error,
       });
 
-      if (!status) {
-        throw new HttpException('Ingestion status not found', HttpStatus.NOT_FOUND);
+      if (
+        updatedStatus.status === IngestionStatusEnum.FAILED &&
+        this.canRetry(updatedStatus)
+      ) {
+        return this.retryIngestion(updatedStatus);
       }
 
-      if (this.isStatusFinal(status.status)) {
-        return status;
-      }
-
-      const pythonBackendUrl = this.configService.get<string>('PYTHON_BACKEND_URL');
-      if (!pythonBackendUrl) {
-        this.logger.warn('Python backend URL not configured, using local status');
-        return status;
-      }
-
-      const response = await firstValueFrom(
-        this.httpService.get<PythonResponse>(`${pythonBackendUrl}/status/${status.id}`).pipe(
-          timeout(this.pythonBackendTimeout),
-          catchError((error: AxiosError) => {
-            this.logger.warn(`Failed to get status from Python backend: ${error.message}`);
-            return of({
-              data: {
-                status: status.status,
-                metadata: status.metadata,
-              },
-            });
-          }),
-        ),
-      );
-
-      if (response.data.status !== status.status) {
-        const updatedStatus = await this.updateStatus(status.id, {
-          status: response.data.status,
-          metadata: {
-            ...status.metadata,
-            ...response.data.metadata,
-            lastChecked: new Date().toISOString(),
-          },
-          error: response.data.error,
-        });
-
-        if (
-          updatedStatus.status === IngestionStatusEnum.FAILED &&
-          this.canRetry(updatedStatus)
-        ) {
-          return this.retryIngestion(updatedStatus);
-        }
-
-        return updatedStatus;
-      }
-
-      return status;
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      this.logger.error(`Error checking status: ${(error as Error).message}`);
-      throw new HttpException(
-        'Failed to get ingestion status',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      return updatedStatus;
     }
+
+    return status;
+  } catch (error) {
+    this.logger.error(`Failed to get ingestion status: ${(error as Error).message}`);
+    throw new HttpException(
+      'Failed to get ingestion status',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
+
+  async updateIngestionStatus(id: number, status: string, error: string): Promise<void> {
+    // Implement the logic to update the ingestion status
+    console.log(`Updating ingestion status for ID: ${id}, Status: ${status}, Error: ${error}`);
+    // Example implementation:
+    // const ingestion = await this.ingestionRepository.findOne(id);
+    // if (ingestion) {
+    //   ingestion.status = status;
+    //   ingestion.error = error;
+    //   await this.ingestionRepository.save(ingestion);
+    // }
   }
 
   private isStatusFinal(status: IngestionStatusEnum): boolean {

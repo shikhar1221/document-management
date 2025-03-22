@@ -62,6 +62,7 @@ export class DocumentController {
       createDocumentDto.title= title;
       createDocumentDto.description= description;
       createDocumentDto.userId= req.user.sub;
+      console.log(createDocumentDto);
       return await this.documentService.create(createDocumentDto, file);
     } catch (error) {
       throw new HttpException('Failed to create document', 500);
@@ -111,24 +112,53 @@ export class DocumentController {
     }
   }
 
-  @Roles(Role.Admin, Role.Editor)
-  @Put(':id')
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: 'Update a document by ID' })
-  @ApiResponse({ status: 200, description: 'The document has been successfully updated.', type: DocumentEntity })
-  @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async update(
-    @Param('id') id: string,
-    @UploadedFile() file: Multer.File,
-    @Body(new ValidationPipe({ transform: true })) updateDocumentDto: UpdateDocumentDto,
-  ) {
-    try {
-      return await this.documentService.update(id, updateDocumentDto, file);
-    } catch (error) {
-      throw new HttpException('Failed to update document', 500);
+@Roles(Role.Admin, Role.Editor)
+@Put(':id')
+@UseInterceptors(FileInterceptor('file', {
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new HttpException('Only PDF files are allowed!', 400), false);
     }
+  },
+}))
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+      documentId: {type:'string'},
+      file: {
+        type: 'string',
+        format: 'binary',
+      },
+    },
+  },
+})
+@ApiOperation({ summary: 'Update a document by ID' })
+@ApiResponse({ status: 200, description: 'The document has been successfully updated.', type: DocumentEntity })
+@ApiResponse({ status: 403, description: 'Forbidden.' })
+async update(
+  // @Param('id') id: string,
+  @UploadedFile() file: Multer.File,
+  @Body() body: { title: string; description: string; documentId:string},
+  @Req() req: ExpressRequest & { user?: any },
+) {
+  try {
+    const updateDocumentDto = new UpdateDocumentDto();
+    const { title, description, documentId } = body;
+    updateDocumentDto.title = title;
+    updateDocumentDto.description = description;
+    updateDocumentDto.documentId = documentId;
+    updateDocumentDto.userId = req.user.sub;
+    return await this.documentService.update(documentId, updateDocumentDto, file);
+  } catch (error) {
+    throw new HttpException('Failed to update document', 500);
   }
+}
 
   @Roles(Role.Admin)
   @Delete(':id')

@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '../auth/roles.enum';
 import { UpdateIngestionStatusDto } from './dto/update-ingestion-status.dto';
+import { TriggerIngestionDto } from './dto/trigger-ingestion.dto';
 
 @Controller('ingestion')
 @ApiTags('Document Ingestion')
@@ -20,8 +21,9 @@ export class IngestionController {
   @ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Ingestion process started' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found' })
   async triggerIngestion(
-    @Body(ValidationPipe) { documentId }: { documentId: number }
+    @Body(ValidationPipe) triggerIngestionDto: TriggerIngestionDto
   ): Promise<void> {
+    const { documentId } = triggerIngestionDto;
     await this.ingestionService.triggerIngestion(documentId.toString());
   }
 

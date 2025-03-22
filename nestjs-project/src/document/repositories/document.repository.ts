@@ -7,7 +7,7 @@ import { UpdateDocumentDto } from '../dto/update-document.dto';
 
 @Injectable()
 export class DocumentRepository {
-  private repository: Repository<DocumentEntity>;
+ repository: Repository<DocumentEntity>;
   private readonly logger = new Logger(DocumentRepository.name);
 
   constructor(
@@ -60,6 +60,7 @@ export class DocumentRepository {
   }
 
   async removeDocument(id: string): Promise<DocumentEntity> {
+    console.log(id);
     const document = await this.repository.findOne({ where: { id: parseInt(id) } });
     console.log(document);
     if (!document) {
