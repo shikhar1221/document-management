@@ -10,7 +10,7 @@ export class RefreshTokenEntity {
   @Column()
   token: string;
 
-  @ManyToOne(() => UserEntity, user => user.refreshTokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, user => user.tokens, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: UserEntity;
 

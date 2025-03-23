@@ -106,7 +106,7 @@ export class AuthService {
     // Clear any session data if needed
     // This is optional depending on your session management
   }
-  
+
   async hasPermission(user: UserEntity, permission: string): Promise<boolean> {
     return user.hasPermission(permission);
   }

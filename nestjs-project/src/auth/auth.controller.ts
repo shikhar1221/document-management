@@ -1,5 +1,5 @@
 // src/auth/auth.controller.ts
-import { Controller, Post, Body, Delete, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Delete, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
 import { RegisterDto } from './dto/register.dto';
@@ -7,15 +7,12 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiOperation, ApiResponse, ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from './entities/user.entity';
-
-interface AuthenticatedRequest extends Request {
-  user: UserEntity;
-}
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly jwtService: JwtService) {}
 
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully.' })
@@ -36,8 +33,19 @@ export class AuthController {
   @ApiBearerAuth()
   @Delete('logout')
   @UseGuards(JwtAuthGuard)
-  async logout(@Req() req: AuthenticatedRequest) {
-    await this.authService.logout(req.user.id.toString());
-    return { message: 'Successfully logged out' };
-  }
+  async logout(@Req() req: Request) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
+    }
+
+    try {
+      const decoded = this.jwtService.decode(token) as { sub: string };
+      const userId = decoded.sub;
+      await this.authService.logout(userId);
+      return { message: 'Successfully logged out' };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
+}
 }

@@ -20,8 +20,8 @@ export class UserEntity {
   @Column({ type: 'jsonb', default: {} })
   permissions: Record<string, boolean>;
 
-  @OneToMany(() => RefreshTokenEntity, refreshToken => refreshToken.user)
-  refreshTokens: RefreshTokenEntity[];
+  @OneToMany(() => RefreshTokenEntity, token => token.user)
+  tokens: RefreshTokenEntity[];
 
   @OneToMany(() => DocumentEntity, document => document.user)
   documents: DocumentEntity[];
