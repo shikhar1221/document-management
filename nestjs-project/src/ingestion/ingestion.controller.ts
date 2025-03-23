@@ -1,21 +1,26 @@
 import { Controller, Post, Get, Body, Param, UseGuards, HttpStatus, HttpCode, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IngestionService } from './ingestion.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
-import { Role } from '../auth/roles.enum';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
 import { UpdateIngestionStatusDto } from './dto/update-ingestion-status.dto';
 import { TriggerIngestionDto } from './dto/trigger-ingestion.dto';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
+import { Permissions } from 'src/auth/decorators/permissions.decorator';
+import { Permission } from 'src/auth/enums/permissions.enum';
 
 @Controller('ingestion')
 @ApiTags('Document Ingestion')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard,RolesGuard,PermissionsGuard)
 export class IngestionController {
   constructor(private readonly ingestionService: IngestionService) {}
 
   @Post()
   @Roles(Role.Admin, Role.Editor)
+  @Permissions(Permission.INGESTION_TRIGGER)
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Trigger document ingestion process' })
   @ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Ingestion process started' })
@@ -29,6 +34,7 @@ export class IngestionController {
 
   @Get(':documentId')
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Permissions(Permission.INGESTION_STATUS)
   @ApiOperation({ summary: 'Get ingestion status for a document' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Returns the ingestion status' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Document not found' })

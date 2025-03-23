@@ -1,7 +1,7 @@
 // src/auth/dto/register.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
-import { Role } from '../roles.enum';
+import { Role } from '../enums/roles.enum';
 
 export class RegisterDto {
   

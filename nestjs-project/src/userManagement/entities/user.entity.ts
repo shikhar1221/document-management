@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany, ManyToMany } from 'typeorm';
-import { Role } from '../../auth/roles.enum';
-import { TokenEntity } from '../../auth/entities/token.entity';
+import { Role } from '../../auth/enums/roles.enum';
+import { RefreshTokenEntity } from '../../auth/entities/refresh-token.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -17,8 +17,8 @@ export class UserEntity {
   @Column({type: 'enum', enum: Role, array:true, default: [Role.Viewer]})
   roles: Role[];
 
-  @OneToMany(() => TokenEntity, token => token.user)
-  tokens: TokenEntity[];
+  @OneToMany(() => RefreshTokenEntity, token => token.user)
+  tokens: RefreshTokenEntity[];
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

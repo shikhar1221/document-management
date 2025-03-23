@@ -1,6 +1,6 @@
 // src/userManagement/dto/update-user.dto.ts
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { Role } from '../../auth/roles.enum';
+import { Role } from '../../auth/enums/roles.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateUserDto {
