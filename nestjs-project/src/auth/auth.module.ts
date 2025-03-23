@@ -12,6 +12,7 @@ import { UserRepository } from './repositories/user.repository';
 import { TokenRepository } from './repositories/token.repository';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PermissionsGuard } from './guards/permissions.guard';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     AuthService,
     JwtStrategy,
     JwtAuthGuard,
+    PermissionsGuard,
   ],
-  exports: [AuthService, JwtAuthGuard, JwtModule],
+  exports: [AuthService, JwtAuthGuard, JwtModule, PermissionsGuard],
 })
 export class AuthModule {}
