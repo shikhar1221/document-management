@@ -25,7 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('No token provided');
     }
 
-    const user = await this.authService.validateUserWithToken(token);
+    const user = await this.authService.getUserFromToken(token);
     if (!user) {
       throw new UnauthorizedException('Invalid token');
     }
