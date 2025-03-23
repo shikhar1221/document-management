@@ -1,9 +1,9 @@
 import { Controller, Post, Get, Body, Param, UseGuards, HttpStatus, HttpCode, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IngestionService } from './ingestion.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { Roles } from '../auth/roles.decorator';
-import { Role } from '../auth/roles.enum';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../auth/enums/roles.enum';
 import { UpdateIngestionStatusDto } from './dto/update-ingestion-status.dto';
 import { TriggerIngestionDto } from './dto/trigger-ingestion.dto';
 
