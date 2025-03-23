@@ -8,15 +8,20 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../auth/enums/roles.enum';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from 'src/auth/entities/user.entity';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
+import { Permissions } from 'src/auth/decorators/permissions.decorator';
+import { Permission } from 'src/auth/enums/permissions.enum';
 
 @ApiTags('User Management')
 @ApiBearerAuth()
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Roles(Role.Admin)
+  @Permissions(Permission.USERS_CREATE)
   @Post()
   @ApiOperation({ summary: 'Create a new user' })
   @ApiResponse({ status: 201, description: 'The user has been successfully created.', type: UserEntity })
@@ -26,6 +31,7 @@ export class UserController {
   }
 
   @Roles(Role.Admin)
+  @Permissions(Permission.USERS_READ)
   @Get()
   @ApiOperation({ summary: 'Get all users' })
   @ApiResponse({ status: 200, description: 'Return all users.', type: [UserEntity] })
@@ -35,6 +41,7 @@ export class UserController {
   }
 
   @Roles(Role.Admin)
+  @Permissions(Permission.USERS_READ)
   @Get(':id')
   @ApiOperation({ summary: 'Get a user by ID' })
   @ApiResponse({ status: 200, description: 'Return the user.', type: UserEntity })
@@ -44,6 +51,7 @@ export class UserController {
   }
 
   @Roles(Role.Admin)
+  @Permissions(Permission.USERS_UPDATE)
   @Put(':id')
   @ApiOperation({ summary: 'Update a user by ID' })
   @ApiResponse({ status: 200, description: 'The user has been successfully updated.', type: UserEntity })
@@ -53,11 +61,12 @@ export class UserController {
   }
 
   @Roles(Role.Admin)
+  @Permissions(Permission.USERS_DELETE)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a user by ID' })
   @ApiResponse({ status: 200, description: 'The user has been successfully deleted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
- remove(@Param('id') id: string) {
+  remove(@Param('id') id: string) {
     return this.userService.remove(id);
   }
 }

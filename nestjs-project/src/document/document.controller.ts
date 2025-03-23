@@ -23,7 +23,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 @ApiTags('Document Management APIs')
 @ApiBearerAuth()
 @Controller('documents')
-@UseGuards(JwtAuthGuard, PermissionsGuard, RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
