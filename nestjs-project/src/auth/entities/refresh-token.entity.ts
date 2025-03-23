@@ -1,15 +1,16 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { UserEntity } from './user.entity';
 
-@Entity('tokens')
-export class TokenEntity {
+// entities/refresh-token.entity.ts
+@Entity('refresh_tokens')
+export class RefreshTokenEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   token: string;
 
-  @ManyToOne(() => UserEntity, user => user.tokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, user => user.refreshTokens, { onDelete: 'CASCADE' })
   @JoinColumn()
   user: UserEntity;
 
