@@ -21,5 +21,8 @@ COPY . .
 COPY .env ./
 RUN pnpm run build
 
+# Create the upload directory in the root
+RUN mkdir -p /usr/src/app/upload
+
 EXPOSE 3000
 CMD ["pnpm", "run", "start:prod"]
