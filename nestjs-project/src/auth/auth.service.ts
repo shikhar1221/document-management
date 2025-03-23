@@ -116,7 +116,6 @@ export class AuthService {
   }
 
   async validateUser(userId: string): Promise<UserEntity> {
-    console.log(userId);
     const user = await this.userRepository.repository.findOne({
       where: { id: parseInt(userId) },
       relations: ['tokens']
@@ -127,8 +126,8 @@ export class AuthService {
     return user;
   }
 
-  //function to verify and return user from token
-  async validateUserWithToken(token: string): Promise<UserEntity> {
+  // Return user from token
+  async getUserFromToken(token: string): Promise<UserEntity> {
 
     try {
       // Decode the token to get the user ID
@@ -144,9 +143,6 @@ export class AuthService {
       if (!user) {
         throw new NotFoundException('User not found');
       }
-
-      // Verify token
-      await this.jwtService.verify(token);
 
       return user;
     } catch (error) {

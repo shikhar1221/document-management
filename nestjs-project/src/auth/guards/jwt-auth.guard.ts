@@ -6,11 +6,13 @@ import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Role } from '../enums/roles.enum';
 import { Permission } from '../enums/permissions.enum';
 import { AuthService } from '../auth.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class JwtAuthGuard extends PassportAuthGuard('jwt') {
   constructor(
     private readonly reflector: Reflector,
+    private readonly jwtService: JwtService,
     private readonly authService: AuthService
   ) {
     super();
@@ -33,41 +35,12 @@ export class JwtAuthGuard extends PassportAuthGuard('jwt') {
     }
 
     try {
-      const user = await this.authService.validateUserWithToken(token);
-      request.user = user;
+      const user = await this.authService.getUserFromToken(token);
+      request.user = user; // Attach user to request for other guards
 
-      // // Check roles
-      // const requiredRoles = this.reflector.get<Role[]>(
-      //   'roles',
-      //   context.getHandler()
-      // );
-      // if (requiredRoles) {
-      //   if (!user.roles) {
-      //     throw new ForbiddenException('User roles not found');
-      //   }
-      //   const hasRequiredRole = requiredRoles.some(role => user.roles.includes(role));
-      //   if (!hasRequiredRole) {
-      //     throw new ForbiddenException('Insufficient role permissions');
-      //   }
-      // }
 
-      // // Check permissions
-      // const requiredPermissions = this.reflector.get<Permission[]>(
-      //   'permissions',
-      //   context.getHandler()
-      // );
-      // if (requiredPermissions) {
-      //   if (!user.permissions) {
-      //     throw new ForbiddenException('User permissions not found');
-      //   }
-      //   const hasRequiredPermission = requiredPermissions.every(permission => 
-      //     user.permissions[permission] === true
-      //   );
-      //   if (!hasRequiredPermission) {
-      //     throw new ForbiddenException('Insufficient permission');
-      //   }
-      // }
-
+      // Verify token
+      await this.jwtService.verify(token);
       return true;
     } catch (error) {
       throw new UnauthorizedException('Invalid token');
