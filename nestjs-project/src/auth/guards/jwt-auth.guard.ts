@@ -2,15 +2,16 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
-import { ForbiddenException } from '@nestjs/common';
-import { UserEntity } from '../entities/user.entity';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Role } from '../enums/roles.enum';
 import { Permission } from '../enums/permissions.enum';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class JwtAuthGuard extends PassportAuthGuard('jwt') {
   constructor(
     private readonly reflector: Reflector,
+    private readonly authService: AuthService
   ) {
     super();
   }
@@ -26,33 +27,50 @@ export class JwtAuthGuard extends PassportAuthGuard('jwt') {
     }
 
     const request = context.switchToHttp().getRequest();
-    const user = request.user as UserEntity;
-
-    // Check roles
-    const requiredRoles = this.reflector.get<Role[]>(
-      'roles',
-      context.getHandler()
-    );
-    if (requiredRoles) {
-      const hasRequiredRole = requiredRoles.some(role => user.roles.includes(role));
-      if (!hasRequiredRole) {
-        throw new ForbiddenException('Insufficient role permissions');
-      }
+    const token = request.headers.authorization?.split(' ')[1];
+    if (!token) {
+      throw new UnauthorizedException('No token provided');
     }
 
-    // Check permissions
-    const requiredPermissions = this.reflector.get<Permission[]>(
-      'permissions',
-      context.getHandler()
-    );
-    if (requiredPermissions) {
-      for (const permission of requiredPermissions) {
-        if (!user.permissions[permission]) {
-          throw new ForbiddenException('Insufficient permission');
-        }
-      }
-    }
+    try {
+      const user = await this.authService.validateUserWithToken(token);
+      request.user = user;
 
-    return true;
+      // // Check roles
+      // const requiredRoles = this.reflector.get<Role[]>(
+      //   'roles',
+      //   context.getHandler()
+      // );
+      // if (requiredRoles) {
+      //   if (!user.roles) {
+      //     throw new ForbiddenException('User roles not found');
+      //   }
+      //   const hasRequiredRole = requiredRoles.some(role => user.roles.includes(role));
+      //   if (!hasRequiredRole) {
+      //     throw new ForbiddenException('Insufficient role permissions');
+      //   }
+      // }
+
+      // // Check permissions
+      // const requiredPermissions = this.reflector.get<Permission[]>(
+      //   'permissions',
+      //   context.getHandler()
+      // );
+      // if (requiredPermissions) {
+      //   if (!user.permissions) {
+      //     throw new ForbiddenException('User permissions not found');
+      //   }
+      //   const hasRequiredPermission = requiredPermissions.every(permission => 
+      //     user.permissions[permission] === true
+      //   );
+      //   if (!hasRequiredPermission) {
+      //     throw new ForbiddenException('Insufficient permission');
+      //   }
+      // }
+
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid token');
+    }
   }
 }

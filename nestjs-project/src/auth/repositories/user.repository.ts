@@ -1,7 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../entities/user.entity';
 import { UpdateUserDto } from '../../userManagement/dto/update-user.dto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UserRepository {
@@ -25,13 +25,20 @@ export class UserRepository {
   }
 
   async findOneById(id: string): Promise<UserEntity> {
-    return this.repository.findOne({ where: { id: parseInt(id), } });
+    const user = await this.repository.findOne({
+      where: { id: parseInt(id) },
+      relations: ['tokens']
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
   }
 
   async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<any> {
     const user = await this.repository.findOne({ where: { id: parseInt(id), } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     
     // Merge the updateUserDto with the existing user
@@ -42,7 +49,7 @@ export class UserRepository {
   async removeUser(id: string): Promise<UserEntity> {
     const user = await this.repository.findOne({ where: { id: parseInt(id), } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
     
     return this.repository.remove(user);
