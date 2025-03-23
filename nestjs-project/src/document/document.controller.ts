@@ -15,15 +15,20 @@ import { HttpException } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DocumentEntity } from './entities/document.entity';
 import * as path from 'path';
+import { Permission } from 'src/auth/enums/permissions.enum';
+import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
+import { Permissions } from 'src/auth/decorators/permissions.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @ApiTags('Document Management APIs')
 @ApiBearerAuth()
 @Controller('documents')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard, RolesGuard)
 export class DocumentController {
   constructor(private readonly documentService: DocumentService) {}
 
   @Roles(Role.Admin, Role.Editor)
+  @Permissions(Permission.DOCUMENTS_CREATE) 
   @Post()
   @UseInterceptors(FileInterceptor('file',{
     fileFilter: (req, file, cb) => {
@@ -70,6 +75,7 @@ export class DocumentController {
   }
 
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Permissions(Permission.DOCUMENTS_READ)
   @Get()
   @ApiOperation({ summary: 'Get all documents with pagination, filtering, and sorting' })
   @ApiResponse({ status: 200, description: 'Return all documents.', type: [DocumentEntity] })
@@ -83,6 +89,7 @@ export class DocumentController {
   }
 
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Permissions(Permission.DOCUMENTS_READ)
   @Get(':id')
   @ApiOperation({ summary: 'Get a document by ID' })
   @ApiResponse({ status: 200, description: 'Return the document.', type: DocumentEntity })
@@ -96,6 +103,7 @@ export class DocumentController {
   }
 
   @Roles(Role.Admin, Role.Editor, Role.Viewer)
+  @Permissions(Permission.DOCUMENTS_READ, Permission.DOCUMENTS_DOWNLOAD)
   @Get(':id/download')
   @ApiOperation({ summary: 'Download a document file by ID' })
   @ApiResponse({ status: 200, description: 'The document file has been successfully downloaded.' })
@@ -112,12 +120,13 @@ export class DocumentController {
     }
   }
 
-@Roles(Role.Admin, Role.Editor)
-@Put(':id')
-@UseInterceptors(FileInterceptor('file', {
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
+  @Roles(Role.Admin, Role.Editor)
+  @Permissions(Permission.DOCUMENTS_UPDATE)
+  @Put(':id')
+  @UseInterceptors(FileInterceptor('file', {
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
     } else {
       cb(new HttpException('Only PDF files are allowed!', 400), false);
     }
@@ -142,7 +151,6 @@ export class DocumentController {
 @ApiResponse({ status: 200, description: 'The document has been successfully updated.', type: DocumentEntity })
 @ApiResponse({ status: 403, description: 'Forbidden.' })
 async update(
-  // @Param('id') id: string,
   @UploadedFile() file: Multer.File,
   @Body() body: { title: string; description: string; documentId:string},
   @Req() req: ExpressRequest & { user?: any },
@@ -161,6 +169,7 @@ async update(
 }
 
   @Roles(Role.Admin)
+  @Permissions(Permission.DOCUMENTS_DELETE)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a document by ID' })
   @ApiResponse({ status: 200, description: 'The document has been successfully deleted.' })

@@ -43,6 +43,6 @@ export class UserEntity {
   }
 
   hasPermission(permission: string): boolean {
-    return this.permissions[permission] || false;
+    return this.permissions[permission] === true;
   }
 }
