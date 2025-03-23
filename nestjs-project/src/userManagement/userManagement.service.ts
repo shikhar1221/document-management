@@ -5,7 +5,7 @@ import { UserRepository } from '../auth/repositories/user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
-import { Role } from '../auth/roles.enum';
+import { Role } from '../auth/enums/roles.enum';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
