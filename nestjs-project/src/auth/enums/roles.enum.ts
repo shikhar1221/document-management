@@ -12,6 +12,7 @@ export const DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.DOCUMENTS_CREATE,
     Permission.DOCUMENTS_UPDATE,
     Permission.DOCUMENTS_DELETE,
+    Permission.DOCUMENTS_DOWNLOAD,
     Permission.INGESTION_TRIGGER,
     Permission.INGESTION_STATUS,
     Permission.USERS_READ,
@@ -27,11 +28,13 @@ export const DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.DOCUMENTS_READ,
     Permission.DOCUMENTS_CREATE,
     Permission.DOCUMENTS_UPDATE,
+    Permission.DOCUMENTS_DOWNLOAD,
     Permission.INGESTION_TRIGGER,
     Permission.INGESTION_STATUS,
   ],
   [Role.Viewer]: [
     Permission.DOCUMENTS_READ,
+    Permission.DOCUMENTS_DOWNLOAD,
     Permission.INGESTION_STATUS,
   ],
 };

@@ -5,6 +5,7 @@ export enum Permission {
   DOCUMENTS_CREATE = 'documents:create',
   DOCUMENTS_UPDATE = 'documents:update',
   DOCUMENTS_DELETE = 'documents:delete',
+  DOCUMENTS_DOWNLOAD = 'documents:download',
   
   // Ingestion permissions
   INGESTION_TRIGGER = 'ingestion:trigger',
