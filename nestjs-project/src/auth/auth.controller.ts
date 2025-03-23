@@ -3,8 +3,13 @@ import { Controller, Post, Body, Delete, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UserEntity } from './entities/user.entity';
+
+interface AuthenticatedRequest extends Request {
+  user: UserEntity;
+}
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -23,5 +28,14 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({ status: 200, description: 'User logged out successfully.' })
+  @Delete('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Req() req: AuthenticatedRequest) {
+    await this.authService.logout(req.user.id.toString());
+    return { message: 'Successfully logged out' };
   }
 }

@@ -7,16 +7,16 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { UserEntity } from './entities/user.entity';
-import { TokenEntity } from './entities/token.entity';
+import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { UserRepository } from './repositories/user.repository';
 import { TokenRepository } from './repositories/token.repository';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([UserEntity, TokenEntity]),
+    TypeOrmModule.forFeature([UserEntity, RefreshTokenEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

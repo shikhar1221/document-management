@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, JoinTable, OneToMany, ManyToMany } from 'typeorm';
-import { Role } from '../../auth/roles.enum';
-import { TokenEntity } from '../../auth/entities/token.entity';
+import { Role } from '../../auth/enums/roles.enum';
+import { TokenEntity } from '../../auth/entities/refresh-token.entity';
 
 @Entity('users')
 export class UserEntity {
