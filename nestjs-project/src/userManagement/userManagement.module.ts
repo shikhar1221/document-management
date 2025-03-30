@@ -1,20 +1,15 @@
 // src/userManagement/userManagement.module.ts
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserController } from './userManagement.controller';
-import { UserService } from './userManagement.service';
-import { UserEntity } from './entities/user.entity';
-import { UserRepository } from '../auth/repositories/user.repository';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../auth/enums/roles.enum';
-import { AuthModule } from 'src/auth/auth.module';
+import { Module } from '@nestjs/common'
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { UserController } from './userManagement.controller'
+import { UserService } from './userManagement.service'
+import { UserEntity } from './entities/user.entity'
+import { UserRepository } from '../auth/repositories/user.repository'
+import { RolesGuard } from '../auth/guards/roles.guard'
+import { AuthModule } from '../auth/auth.module'
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([UserEntity]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([UserEntity]), AuthModule],
   controllers: [UserController],
   providers: [UserService, RolesGuard, UserRepository],
   exports: [UserService],

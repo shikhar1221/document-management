@@ -1,22 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm'
+import { UserEntity } from './user.entity'
 
 // entities/refresh-token.entity.ts
 @Entity('refresh_tokens')
 export class RefreshTokenEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number
 
   @Column()
-  token: string;
+  token!: string
 
-  @ManyToOne(() => UserEntity, user => user.tokens, { onDelete: 'CASCADE' })
+  @ManyToOne(() => UserEntity, (user) => user.tokens, { onDelete: 'CASCADE' })
   @JoinColumn()
-  user: UserEntity;
+  user!: UserEntity
 
   @Column({ type: 'timestamp' })
-  expiresAt: Date;
+  expiresAt!: Date
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  createdAt!: Date
 }

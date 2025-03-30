@@ -1,17 +1,17 @@
 // src/userManagement/user.controller.ts
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { UserService } from './userManagement.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '../auth/enums/roles.enum';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { UserEntity } from 'src/auth/entities/user.entity';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { PermissionsGuard } from 'src/auth/guards/permissions.guard';
-import { Permissions } from 'src/auth/decorators/permissions.decorator';
-import { Permission } from 'src/auth/enums/permissions.enum';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common'
+import { UserService } from './userManagement.service'
+import { CreateUserDto } from './dto/create-user.dto'
+import { UpdateUserDto } from './dto/update-user.dto'
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'
+import { Roles } from '../auth/decorators/roles.decorator'
+import { Role } from '../auth/enums/roles.enum'
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger'
+import { UserEntity } from '../auth/entities/user.entity'
+import { RolesGuard } from '../auth/guards/roles.guard'
+import { PermissionsGuard } from '../auth/guards/permissions.guard'
+import { Permissions } from '../auth/decorators/permissions.decorator'
+import { Permission } from '../auth/enums/permissions.enum'
 
 @ApiTags('User Management')
 @ApiBearerAuth()
@@ -27,7 +27,7 @@ export class UserController {
   @ApiResponse({ status: 201, description: 'The user has been successfully created.', type: UserEntity })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+    return this.userService.create(createUserDto)
   }
 
   @Roles(Role.Admin)
@@ -37,7 +37,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return all users.', type: [UserEntity] })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   findAll() {
-    return this.userService.findAll();
+    return this.userService.findAll()
   }
 
   @Roles(Role.Admin)
@@ -47,7 +47,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Return the user.', type: UserEntity })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
+    return this.userService.findOne(id)
   }
 
   @Roles(Role.Admin)
@@ -57,7 +57,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'The user has been successfully updated.', type: UserEntity })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+    return this.userService.update(id, updateUserDto)
   }
 
   @Roles(Role.Admin)
@@ -67,6 +67,6 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'The user has been successfully deleted.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   remove(@Param('id') id: string) {
-    return this.userService.remove(id);
+    return this.userService.remove(id)
   }
 }

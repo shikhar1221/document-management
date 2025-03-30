@@ -1,22 +1,21 @@
-
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { Logger, ValidationPipe } from '@nestjs/common'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT || 3000;
+  const app = await NestFactory.create(AppModule)
+  const port = process.env.PORT || 3000
 
   // Enable CORS if needed
   app.enableCors({
     origin: process.env.CORS_ORIGIN,
-  });
+  })
 
   // Use Helmet to secure the app by setting various HTTP headers
-  app.use(helmet());
+  app.use(helmet())
 
   // Optionally, apply rate limiting if needed
   app.use(
@@ -24,7 +23,7 @@ async function bootstrap() {
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // limit each IP to 100 requests per windowMs
     }),
-  );
+  )
 
   // Use global validation pipe for DTO validation
   app.useGlobalPipes(
@@ -33,7 +32,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       transform: true,
     }),
-  );
+  )
 
   // Configure Swagger
   const config = new DocumentBuilder()
@@ -41,27 +40,27 @@ async function bootstrap() {
     .setDescription('API documentation for the Document Management System')
     .setVersion('1.0')
     .addBearerAuth()
-    .build();
-  const swaggerDocument = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, swaggerDocument);
+    .build()
+  const swaggerDocument = SwaggerModule.createDocument(app, config)
+  SwaggerModule.setup('api', app, swaggerDocument)
 
   // Graceful shutdown handling
-  app.enableShutdownHooks();
+  app.enableShutdownHooks()
   process.on('SIGINT', async () => {
-    Logger.log('SIGINT signal received: closing HTTP server');
-    await app.close();
-    process.exit(0);
-  });
+    Logger.log('SIGINT signal received: closing HTTP server')
+    await app.close()
+    process.exit(0)
+  })
   process.on('SIGTERM', async () => {
-    Logger.log('SIGTERM signal received: closing HTTP server');
-    await app.close();
-    process.exit(0);
-  });
+    Logger.log('SIGTERM signal received: closing HTTP server')
+    await app.close()
+    process.exit(0)
+  })
 
   // Start the HTTP server
-  await app.listen(port);
+  await app.listen(port)
 
-  Logger.log(`Application is running on: http://localhost:${port}`);
+  Logger.log(`Application is running on: http://localhost:${port}`)
 }
 
-bootstrap();
+bootstrap()
