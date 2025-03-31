@@ -1,35 +1,42 @@
 // dto/update-ingestion-status.dto.ts
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsEnum, IsOptional, IsString } from 'class-validator';
-import { IngestionStatusEnum } from '../enums/ingestion-status.enum';
+import { ApiProperty } from '@nestjs/swagger'
+import { IsNumber, IsEnum, IsOptional, IsString, IsNotEmpty } from 'class-validator'
+import { IngestionStatusEnum } from '../enums/ingestion-status.enum'
 
 export class UpdateIngestionStatusDto {
   @ApiProperty({
     description: 'The ID of the ingestion status to update',
-    example: 1
+    example: 1,
   })
+  @IsNotEmpty()
   @IsNumber()
-  id: number;
+  id!: number
 
   @ApiProperty({
     description: 'The new status of the ingestion',
-    enum: IngestionStatusEnum
+    enum: IngestionStatusEnum,
+    required: true,
   })
-  @IsEnum(IngestionStatusEnum)
-  status: IngestionStatusEnum;
+  @IsNotEmpty()
+  @IsEnum(IngestionStatusEnum, {
+    message: 'Status must be a valid ingestion status enum value',
+  })
+  status!: IngestionStatusEnum
 
   @ApiProperty({
-    description: 'Optional error message if ingestion failed',
-    required: false
+    description: 'Error message if ingestion failed',
+    required: true,
+    nullable: true,
+    default: null,
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  error?: string;
+  error: string | null = null
 
   @ApiProperty({
     description: 'Optional metadata about the ingestion',
     required: false,
   })
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 }

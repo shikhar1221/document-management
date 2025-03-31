@@ -1,48 +1,46 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, AfterLoad } from 'typeorm';
-import { DocumentEntity } from '../../document/entities/document.entity';
-import { DEFAULT_PERMISSIONS, Role } from '../enums/roles.enum';
-import { RefreshTokenEntity } from './refresh-token.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, AfterLoad } from 'typeorm'
+import { DocumentEntity } from '../../document/entities/document.entity'
+import { DEFAULT_PERMISSIONS, Role } from '../enums/roles.enum'
+import { RefreshTokenEntity } from './refresh-token.entity'
 
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number
 
   @Column({ unique: true })
-  email: string;
+  email!: string
 
   @Column()
-  password: string;
+  password!: string
 
   @Column({ type: 'enum', enum: Role, array: true, default: [Role.Viewer] })
-  roles: Role[];
+  roles!: Role[]
 
   @Column({ type: 'jsonb', default: {} })
-  permissions: Record<string, boolean>;
+  permissions!: Record<string, boolean>
 
-  @OneToMany(() => RefreshTokenEntity, token => token.user)
-  tokens: RefreshTokenEntity[];
+  @OneToMany(() => RefreshTokenEntity, (token) => token.user)
+  tokens!: RefreshTokenEntity[]
 
-  @OneToMany(() => DocumentEntity, document => document.user)
-  documents: DocumentEntity[];
-
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  @OneToMany(() => DocumentEntity, (document) => document.user)
+  documents!: DocumentEntity[]
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  updatedAt: Date;
+  createdAt!: Date
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  updatedAt!: Date
 
   @AfterLoad()
   setDefaultPermissions() {
     if (Object.keys(this.permissions).length === 0) {
-      const defaultPermissions = DEFAULT_PERMISSIONS[this.roles[0]];
-      this.permissions = Object.fromEntries(
-        defaultPermissions.map(permission => [permission, true])
-      );
+      const defaultPermissions = DEFAULT_PERMISSIONS[this.roles[0]]
+      this.permissions = Object.fromEntries(defaultPermissions.map((permission) => [permission, true]))
     }
   }
 
   hasPermission(permission: string): boolean {
-    return this.permissions[permission] === true;
+    return this.permissions[permission] === true
   }
 }

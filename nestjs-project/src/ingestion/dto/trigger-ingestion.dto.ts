@@ -1,6 +1,5 @@
-
-import { IsNotEmpty, IsNumber } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsNumber } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger'
 
 /**
  * Data Transfer Object for triggering the ingestion process of a document.
@@ -17,5 +16,5 @@ export class TriggerIngestionDto {
   })
   @IsNumber()
   @IsNotEmpty()
-  documentId: number;
+  documentId!: number
 }

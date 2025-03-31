@@ -1,4 +1,4 @@
-import { Permission } from "./permissions.enum";
+import { Permission } from './permissions.enum'
 
 export enum Role {
   Admin = 'admin',
@@ -32,9 +32,5 @@ export const DEFAULT_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.INGESTION_TRIGGER,
     Permission.INGESTION_STATUS,
   ],
-  [Role.Viewer]: [
-    Permission.DOCUMENTS_READ,
-    Permission.DOCUMENTS_DOWNLOAD,
-    Permission.INGESTION_STATUS,
-  ],
-};
+  [Role.Viewer]: [Permission.DOCUMENTS_READ, Permission.DOCUMENTS_DOWNLOAD, Permission.INGESTION_STATUS],
+}
