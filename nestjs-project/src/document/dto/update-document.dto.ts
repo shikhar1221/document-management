@@ -1,20 +1,18 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional, IsNumber, IsDate } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { IsNotEmpty, IsString, IsOptional, IsNumber, IsDate } from 'class-validator'
 
 export class UpdateDocumentDto {
   @ApiPropertyOptional({ description: 'Title of the document' })
   @IsOptional()
   @IsString()
-  title?: string;
+  title?: string
 
   @ApiPropertyOptional({ description: 'Description of the document' })
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string
 
-  userId?: string;
+  userId?: string
 
-  
-  documentId?: string;
-
+  documentId?: string
 }

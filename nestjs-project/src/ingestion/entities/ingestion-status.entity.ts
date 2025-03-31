@@ -1,43 +1,55 @@
-
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { DocumentEntity } from '../../document/entities/document.entity';
-import { IsEnum } from 'class-validator';
-import { IngestionStatusEnum } from '../enums/ingestion-status.enum';
-
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm'
+import { DocumentEntity } from '../../document/entities/document.entity'
+import { IsEnum, IsNotEmpty } from 'class-validator'
+import { IngestionStatusEnum } from '../enums/ingestion-status.enum'
 
 @Entity('ingestion_status')
 export class IngestionStatus {
   @PrimaryGeneratedColumn()
-  id: number;
+  @IsNotEmpty()
+  id!: number
 
   @Column()
-  documentId: number;
+  @IsNotEmpty()
+  documentId!: number
 
   @ManyToOne(() => DocumentEntity)
   @JoinColumn({ name: 'documentId' })
-  document: DocumentEntity;
+  @IsNotEmpty()
+  document!: DocumentEntity
 
   @Column({
     type: 'enum',
     enum: IngestionStatusEnum,
-    default: IngestionStatusEnum.PENDING
+    default: IngestionStatusEnum.PENDING,
   })
   @IsEnum(IngestionStatusEnum)
-  status: IngestionStatusEnum;
+  @IsNotEmpty()
+  status!: IngestionStatusEnum
 
   @Column({ type: 'text', nullable: true })
-  error?: string;
+  error?: string | null
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata?: Record<string, any>;
+  metadata?: Record<string, any>
 
   @Column({ type: 'timestamp' })
-  startedAt: Date;
+  @IsNotEmpty()
+  startedAt!: Date
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  @IsNotEmpty()
+  createdAt!: Date
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
-
+  @IsNotEmpty()
+  updatedAt!: Date
 }

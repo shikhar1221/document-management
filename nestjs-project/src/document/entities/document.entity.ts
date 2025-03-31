@@ -1,41 +1,41 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm';
-import { UserEntity } from '../../auth/entities/user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne } from 'typeorm'
+import { UserEntity } from '../../auth/entities/user.entity'
 
 @Entity('documents')
 export class DocumentEntity {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number
 
   @Column()
-  title: string;
+  title!: string
 
   @Column({ nullable: true })
-  description: string;
+  description!: string
 
   @Column()
-  filePath: string;
+  filePath!: string
 
   @Column()
-  fileName: string;
+  fileName!: string
 
   @Column()
-  mimeType: string;
+  mimeType!: string
 
   @Column('bigint')
-  size: number;
+  size!: number
 
   @Column()
-  uploadDate: Date;
+  uploadDate!: Date
 
-  @ManyToOne(() => UserEntity, user => user.documents, { onDelete: 'CASCADE' })
-  user: UserEntity;
+  @ManyToOne(() => UserEntity, (user) => user.documents, { onDelete: 'CASCADE' })
+  user!: UserEntity
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any>;
+  metadata!: Record<string, any>
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date
 }
